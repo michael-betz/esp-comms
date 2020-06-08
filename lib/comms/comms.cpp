@@ -94,6 +94,9 @@ void init_comms(bool createCommsTask, fs::FS &serveFs, const char* servePath, vo
 	const char *ssid = jGetS(s, "wifi_ssid", WIFI_NAME);
 	const char *host = jGetS(s, "hostname", WIFI_HOST_NAME);
 
+	// ------------------------------
+	//  connect to WIFI
+	// ------------------------------
 	WiFi.setHostname(host);
 	WiFi.begin(ssid, jGetS(s, "wifi_pw", WIFI_PW));
 	log_i("This is %s, connecting to %s", host, ssid);
@@ -110,6 +113,7 @@ void init_comms(bool createCommsTask, fs::FS &serveFs, const char* servePath, vo
 			sntp_setoperatingmode(SNTP_OPMODE_POLL);
 			sntp_setservername(0, (char *)"pool.ntp.org");
 			sntp_init();
+			delay(1000);
 		}
 	} else {
 		WiFi.disconnect();
@@ -122,6 +126,9 @@ void init_comms(bool createCommsTask, fs::FS &serveFs, const char* servePath, vo
 
 	}
 
+	// -------------------------------
+	//  Over The Air firmware updates
+	// -------------------------------
 	isOta = jGetB(s, "enable_ota", false);
 	if (isOta) {
 		ArduinoOTA.setHostname(host);
@@ -130,12 +137,33 @@ void init_comms(bool createCommsTask, fs::FS &serveFs, const char* servePath, vo
 		MDNS.begin(host);
 	}
 
+	// -------------------------------
+	//  static http server / WS
+	// -------------------------------
 	http_server.serveStatic("/", serveFs, servePath, "");
 	http_server.begin();
 
 	ws_server.listen(8080);
 	log_i("Websocket at 8080 online: %d", ws_server.available());
 
+	// ------------------------------
+	//  Set the clock / print time
+	// ------------------------------
+	// Set timezone to Eastern Standard Time and print local time
+	const char *tz_str = jGetS(getSettings(), "timezone", "PST8PDT");
+	log_i("Setting timezone to TZ = %s", tz_str);
+	setenv("TZ", tz_str, 1);
+	tzset();
+	time_t now = time(NULL);
+	struct tm timeinfo = {0};
+	char strftime_buf[64];
+	localtime_r(&now, &timeinfo);
+	strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+	log_i("Local Time: %s (%ld)", strftime_buf, now);
+
+	// ------------------------------
+	//  task for async mode
+	// ------------------------------
 	if (createCommsTask) {
 		xTaskCreateUniversal(comms_task, "comms", 4000, NULL, 1, &t_comms, -1);
 	}
