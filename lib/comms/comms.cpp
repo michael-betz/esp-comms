@@ -3,6 +3,7 @@
 #include "detail/mimetable.h"
 #include <ArduinoOTA.h>
 #include <ESPmDNS.h>
+#include "lwip/apps/sntp.h"
 #include <ArduinoWebsockets.h>
 #include <SPIFFS.h>
 #include <FS.h>
@@ -103,7 +104,14 @@ void init_comms(bool createCommsTask, fs::FS &serveFs, const char* servePath, vo
 		}
 		delay(100);
 	}
-	if (WiFi.status() != WL_CONNECTED) {
+	if (WiFi.status() == WL_CONNECTED) {
+		if (!sntp_enabled()) {
+			log_i("Initializing SNTP");
+			sntp_setoperatingmode(SNTP_OPMODE_POLL);
+			sntp_setservername(0, (char *)"pool.ntp.org");
+			sntp_init();
+		}
+	} else {
 		WiFi.disconnect();
 		WiFi.softAPsetHostname(host);
 		WiFi.softAP(host);
