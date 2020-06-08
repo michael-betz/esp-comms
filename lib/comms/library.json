@@ -1,0 +1,10 @@
+{
+	"name": "comms",
+	"version": "0.0.1",
+	"keywords": "web console, ota, wifi, settings, configuration",
+	"description": "esp communication support library",
+	"repository": {
+    	"type": "git",
+    	"url": ""
+  	}
+}

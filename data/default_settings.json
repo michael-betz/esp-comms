@@ -1,0 +1,6 @@
+{
+    "hostname": "esp-comms",
+    "_wifi_ssid": "",
+    "_wifi_pw": "",
+    "enable_ota": false
+}
