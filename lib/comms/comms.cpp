@@ -56,7 +56,8 @@ void refresh_comms(void)
 		ws_client.onMessage(ws_msg_callback);
 		ws_client.onEvent(onEventCallback);
 		// Send hello message to JS
-		ws_client.send("{\"hello\": \"" WIFI_HOST_NAME "\"}");
+		String host = String(jGetS(getSettings(), "hostname", WIFI_HOST_NAME));
+		ws_client.send("{\"hello\": \"" + host + "\"}");
 	}
 
 	if (ws_client.available())
