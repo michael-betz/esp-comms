@@ -9,7 +9,7 @@
 #include "json_settings.h"
 #include "comms.h"
 
-static const char *settings_file;
+static const char *settings_file = NULL;
 static char *txtData = NULL;
 
 void settings_ws_handler(websockets::WebsocketsMessage msg)
