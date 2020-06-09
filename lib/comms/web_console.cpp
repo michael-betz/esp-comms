@@ -13,53 +13,53 @@ static bool isLog = false;
 
 void wsDisableLog()
 {
-    isLog = false;
+	isLog = false;
 }
 
 void wsDebugPutc(char c)
 {
-    // ring-buffer in RTC memory for persistence in sleep mode
-    static const char *logBuffEnd = rtcLogBuffer + LOG_FILE_SIZE - 1;
-    *rtcLogWritePtr = c;
-    if (rtcLogWritePtr >= logBuffEnd) {
-        rtcLogWritePtr = rtcLogBuffer;
-    } else {
-        rtcLogWritePtr++;
-    }
+	// ring-buffer in RTC memory for persistence in sleep mode
+	static const char *logBuffEnd = rtcLogBuffer + LOG_FILE_SIZE - 1;
+	*rtcLogWritePtr = c;
+	if (rtcLogWritePtr >= logBuffEnd) {
+		rtcLogWritePtr = rtcLogBuffer;
+	} else {
+		rtcLogWritePtr++;
+	}
 
-    // line buffer for websocket output
-    static char line_buff[128] = {'a'};
-    static unsigned line_len = 1;
-    static char *cur_char = &line_buff[1];
+	// line buffer for websocket output
+	static char line_buff[128] = {'a'};
+	static unsigned line_len = 1;
+	static char *cur_char = &line_buff[1];
 
-    *cur_char++ = c;
-    line_len++;
+	*cur_char++ = c;
+	line_len++;
 
-    if (c == '\n' || line_len >= sizeof(line_buff)) {
-        line_buff[sizeof(line_buff) - 1] = '\0';
-        if (isLog) {
-            if (g_ws_client && g_ws_client->available())
-                g_ws_client->send(line_buff, line_len);
-            else
-                wsDisableLog();
-        }
-        cur_char = &line_buff[1];
-        line_len = 1;
-    }
+	if (c == '\n' || line_len >= sizeof(line_buff) - 1) {
+		line_buff[sizeof(line_buff) - 1] = '\0';
+		if (isLog) {
+			if (g_ws_client && g_ws_client->available())
+				g_ws_client->send(line_buff, line_len);
+			else
+				wsDisableLog();
+		}
+		cur_char = &line_buff[1];
+		line_len = 1;
+	}
 }
 
 void wsDumpRtc(void)
 {
-    const char *logBuffEnd = rtcLogBuffer + LOG_FILE_SIZE - 1;
-    if (g_ws_client == NULL)
-        return;
-    // put ws command on oldest character
-    *rtcLogWritePtr = 'a';
-    g_ws_client->stream();
-    // dump rtc_buffer[w_ptr:] (oldest part)
-    g_ws_client->send(rtcLogWritePtr, logBuffEnd - rtcLogWritePtr + 1);
-    // dump rtc_buffer[:w_ptr] (newest part)
-    g_ws_client->send(rtcLogBuffer, rtcLogWritePtr - rtcLogBuffer);
-    g_ws_client->end();
-    isLog = true;
+	const char *logBuffEnd = rtcLogBuffer + LOG_FILE_SIZE - 1;
+	if (g_ws_client == NULL)
+		return;
+	// put ws command on oldest character
+	*rtcLogWritePtr = 'a';
+	g_ws_client->stream();
+	// dump rtc_buffer[w_ptr:] (oldest part)
+	g_ws_client->send(rtcLogWritePtr, logBuffEnd - rtcLogWritePtr + 1);
+	// dump rtc_buffer[:w_ptr] (newest part)
+	g_ws_client->send(rtcLogBuffer, rtcLogWritePtr - rtcLogBuffer);
+	g_ws_client->end();
+	isLog = true;
 }
