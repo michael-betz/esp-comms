@@ -3,7 +3,7 @@
 #include <ArduinoWebsockets.h>
 
 // Rolling buffer size in RTC mem for log entries in bytes
-#define LOG_FILE_SIZE 3580
+#define LOG_FILE_SIZE 3576
 
 // add one character to the RTC log buffer.
 // Once a full line is accumulated, push it to the WS.
@@ -16,5 +16,7 @@ void wsDebugPutc(char c);
 void wsDumpRtc(void);
 
 void wsDisableLog();
+
+void web_console_init();
 
 #endif

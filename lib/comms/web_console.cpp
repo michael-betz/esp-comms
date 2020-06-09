@@ -1,13 +1,14 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "esp_attr.h"
+#include "rom/rtc.h"
 #include "comms.h"
 #include "web_console.h"
 
 // put the buffer and write pointer in RTC memory,
 // such that it survives sleep mode
-RTC_DATA_ATTR char rtcLogBuffer[LOG_FILE_SIZE];
-RTC_DATA_ATTR char *rtcLogWritePtr = rtcLogBuffer;
+RTC_NOINIT_ATTR static char rtcLogBuffer[LOG_FILE_SIZE];
+RTC_NOINIT_ATTR static char *rtcLogWritePtr = rtcLogBuffer;
 
 static bool isLog = false;
 
@@ -62,4 +63,16 @@ void wsDumpRtc(void)
 	g_ws_client->send(rtcLogBuffer, rtcLogWritePtr - rtcLogBuffer);
 	g_ws_client->end();
 	isLog = true;
+}
+
+void web_console_init()
+{
+	if (rtc_get_reset_reason(0) == POWERON_RESET) {
+		memset(rtcLogBuffer, 0, LOG_FILE_SIZE - 1);
+		rtcLogWritePtr = rtcLogBuffer;
+	} else {
+		if (rtcLogWritePtr < rtcLogBuffer || rtcLogWritePtr > &rtcLogBuffer[LOG_FILE_SIZE - 1])
+			rtcLogWritePtr = rtcLogBuffer;
+	}
+	ets_install_putc2(wsDebugPutc);
 }

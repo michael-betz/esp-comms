@@ -31,7 +31,7 @@ static void onMsg(websockets::WebsocketsMessage msg)
 void setup()
 {
 	// forwards each serial character to web-console
-	ets_install_putc2(wsDebugPutc);
+	web_console_init();
 
 	SPIFFS.begin(true, "/spiffs", 5);
 
