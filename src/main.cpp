@@ -12,8 +12,20 @@
 // Web socket RX callback
 static void onMsg(websockets::WebsocketsMessage msg)
 {
-	if (msg.c_str()[0] == 'a') wsDumpRtc();
-	settings_ws_handler(msg);
+	if (msg.length() <= 0)
+		return;
+
+	switch (msg.c_str()[0]) {
+		case 'a':
+			wsDumpRtc();  // read rolling log buffer in RTC memory
+			break;
+		case 'b':
+			settings_ws_handler(msg);  // read / write settings.json
+			break;
+		case 'r':
+			ESP.restart();
+			break;
+	}
 }
 
 void setup()

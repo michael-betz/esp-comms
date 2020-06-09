@@ -29,7 +29,7 @@
 
   function writeFile() {
     bnA.disabled = true;
-    websocket.send("c" + textArea.value);
+    websocket.send("b" + textArea.value);
     isWriting = true;
     textArea.value = "";
     tStat.innerHTML = "<font color=#444444>applying ...</font>";
@@ -54,7 +54,7 @@
     websocket = new WebSocket(wsUri);
     websocket.onopen = function(evt) {
       console.log("WS CONNECTED");
-      websocket.send('c');  // dump current settings file
+      websocket.send('b');  // dump current settings file
     };
 
     websocket.onclose = function(evt) {

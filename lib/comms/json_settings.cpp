@@ -14,24 +14,19 @@ static char *txtData = NULL;
 
 void settings_ws_handler(websockets::WebsocketsMessage msg)
 {
-    if (msg.length() <= 0)
-        return;
-    if (msg.rawData()[0] == 'c') {
-        if (msg.length() > 1) {
-            FILE *dest = fopen(settings_file, "wb");
-            if (dest) {
-                fputs(&msg.c_str()[1], dest);
-                fclose(dest);
-                dest = NULL;
-                log_i("re-wrote %s", settings_file);
-                reloadSettings();
-            } else {
-                log_e("fopen(%s, wb) failed: %s", settings_file, strerror(errno));
-            }
+    if (msg.length() > 1) {
+        FILE *dest = fopen(settings_file, "wb");
+        if (dest) {
+            fputs(&msg.c_str()[1], dest);
+            fclose(dest);
+            dest = NULL;
+            log_i("re-wrote %s", settings_file);
+            reloadSettings();
+        } else {
+            log_e("fopen(%s, wb) failed: %s", settings_file, strerror(errno));
         }
-        g_ws_client->send(String("c") + txtData);
     }
-    if (msg.rawData()[0] == 'r') ESP.restart();
+    g_ws_client->send(String("c") + txtData);
 }
 
 void set_settings_file(const char *f_settings, const char *f_defaults)

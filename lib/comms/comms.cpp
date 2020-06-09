@@ -74,7 +74,7 @@ static void comms_task(void *pvParameters)
 {
 	while(true) {
 		refresh_comms();
-		delay(30);
+		delay(100);
 	}
 }
 
