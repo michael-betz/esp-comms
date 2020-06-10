@@ -8,6 +8,10 @@
       "url": "https://github.com/yetifrisstlama/esp-comms.git"
     },
     "export": {
-      "include": ["data"]
+      "include": [
+        "data",
+        "*.h",
+        "*.cpp"
+      ]
     }
 }

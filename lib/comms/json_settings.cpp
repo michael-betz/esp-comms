@@ -56,6 +56,9 @@ char *readFileDyn(const char* file_name, int *file_size) {
 	// opens the file file_name and returns it as dynamically allocated char*
 	// if file_size is not NULL, copies the number of bytes read there
 	// dont forget to call free() on the char* result
+	if (file_name == NULL)
+		return NULL;
+
 	FILE *f = fopen(file_name, "rb");
 	if (!f) {
 		log_e("fopen(%s, rb) failed: %s", file_name, strerror(errno));
@@ -87,7 +90,7 @@ cJSON *readJsonDyn(const char* file_name) {
 	// we keep txtData around for the web-interface
 	free(txtData);
 	txtData = readFileDyn(file_name, NULL);
-	if (!txtData)
+	if (txtData == NULL)
 		return NULL;
 
 	// load txtData as .json
