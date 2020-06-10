@@ -26,7 +26,7 @@ void settings_ws_handler(websockets::WebsocketsMessage msg)
 			log_e("fopen(%s, wb) failed: %s", settings_file, strerror(errno));
 		}
 	}
-	g_ws_client->send(String("c") + txtData);
+	g_ws_client->send(String("b") + txtData);
 }
 
 void set_settings_file(const char *f_settings, const char *f_defaults)

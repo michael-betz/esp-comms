@@ -67,7 +67,7 @@
       if (evt.data.startsWith('{"hello": ')) {
         temp = JSON.parse(evt.data);
         connected_status.innerHTML = "✅ " + temp["hello"];
-      } else if (evt.data[0] == 'c') {
+      } else if (evt.data[0] == 'b') {
         textArea.value = evt.data.slice(1);
         if (isWriting) {
           tStat.innerHTML = "<font color=#44FF44>👍 applied 👍</font>";
