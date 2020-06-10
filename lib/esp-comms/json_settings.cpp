@@ -7,7 +7,7 @@
 #include <ArduinoWebsockets.h>
 #include "cJSON.h"
 #include "json_settings.h"
-#include "comms.h"
+#include "esp_comms.h"
 
 static const char *settings_file = NULL;
 static char *txtData = NULL;

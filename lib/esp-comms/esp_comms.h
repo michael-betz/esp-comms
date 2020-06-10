@@ -1,5 +1,5 @@
-#ifndef COMMS_H
-#define COMMS_H
+#ifndef ESP_COMMS_H
+#define ESP_COMMS_H
 
 #include <ArduinoWebsockets.h>
 #include <FS.h>

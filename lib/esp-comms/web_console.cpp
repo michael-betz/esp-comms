@@ -2,7 +2,7 @@
 #include <stdarg.h>
 #include "esp_attr.h"
 #include "rom/rtc.h"
-#include "comms.h"
+#include "esp_comms.h"
 #include "web_console.h"
 
 // put the buffer and write pointer in RTC memory,

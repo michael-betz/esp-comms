@@ -1,5 +1,5 @@
 {
-  "name": "comms",
+  "name": "esp-comms",
   "version": "0.0.1",
   "keywords": "web console, ota, wifi, settings, configuration",
   "description": "esp communication support library",
@@ -7,11 +7,5 @@
       "type": "git",
       "url": "https://github.com/yetifrisstlama/esp-comms.git"
     },
-    "export": {
-      "include": [
-        "data",
-        "*.h",
-        "*.cpp"
-      ]
-    }
+  "include": "lib/esp-comms"
 }
