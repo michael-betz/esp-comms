@@ -38,7 +38,7 @@ void setup()
 	// When settings.json cannot be opened, it will copy the default_settings over
 	set_settings_file("/spiffs/settings.json", "/spiffs/default_settings.json");
 
-	init_comms(true, SPIFFS, "/", onMsg);
+	init_comms(false, SPIFFS, "/", onMsg);
 
 	// This is how to access a string item from settings.json
 	log_d(
@@ -73,7 +73,7 @@ void loop() {
 			uxTaskGetStackHighWaterMark(t_comms)
 		);
 
-	// refresh_comms();  // only needed when init_comms(false, ...)
+	refresh_comms();  // only needed with init_comms(false, ...)
 
 	cycle++;
 	delay(100);

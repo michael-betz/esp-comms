@@ -7,5 +7,6 @@
       "type": "git",
       "url": "https://github.com/yetifrisstlama/esp-comms.git"
     },
-  "include": "lib/esp-comms"
+  "include": "lib/esp-comms",
+  "examples": ["src/main.cpp"]
 }
