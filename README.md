@@ -1,7 +1,7 @@
 # esp-comms: esp communication support lib
 provides some useful tools for ESP32 projects. 
 
-Can run in its own task (`init_comms(true, ...`) or in the current task (`init_comms(false, ...`). For the latter, `refresh_comms()` needs to be called regularly.
+Can run in its own task with `init_comms(true, ...` or in the current task with `init_comms(false, ...`. For the latter, `refresh_comms()` needs to be called regularly.
 
 ## web console
 All `log_x()` calls are shown in real-time in the browser. Supports ANSI color codes. There is a ring-buffer of a few hundred lines, to see what happened before opening the web-site.
