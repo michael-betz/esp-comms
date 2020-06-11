@@ -25,17 +25,18 @@ static WebServer http_server(80);
 // -----------------
 static void onEventCallback(WebsocketsEvent event, String data)
 {
-	if(event == WebsocketsEvent::ConnectionOpened) {
-		log_d("<open>");	// never called on server, bug? :(
-	} else if(event == WebsocketsEvent::ConnectionClosed) {
+	if(event == WebsocketsEvent::ConnectionClosed) {
 		wsDisableLog();
-		g_ws_client = NULL;
-		log_d("<close>");
-	} else if(event == WebsocketsEvent::GotPing) {
-		log_d("<ping>");
-	} else if(event == WebsocketsEvent::GotPong) {
-		log_d("<pong>");
+		// g_ws_client = NULL;
+		// log_d("<close>");
 	}
+	// if(event == WebsocketsEvent::ConnectionOpened) {
+	// 	log_d("<open>");	// never called on server, bug? :(
+	// } else if(event == WebsocketsEvent::GotPing) {
+	// 	log_d("<ping>");
+	// } else if(event == WebsocketsEvent::GotPong) {
+	// 	log_d("<pong>");
+	// }
 }
 
 static void onMessageCallback(WebsocketsMessage message)
@@ -116,14 +117,13 @@ void init_comms(bool createCommsTask, fs::FS &serveFs, const char* servePath, vo
 			delay(1000);
 		}
 	} else {
-		WiFi.disconnect();
+		WiFi.disconnect(true, true);
 		WiFi.softAPsetHostname(host);
 		WiFi.softAP(host);
 		log_e(
 			"No STA connection, switching to AP mode (%s)",
 			WiFi.softAPIP().toString().c_str()
 		);
-
 	}
 
 	// -------------------------------
