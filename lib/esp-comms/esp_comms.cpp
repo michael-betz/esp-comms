@@ -27,7 +27,7 @@ static void onEventCallback(WebsocketsEvent event, String data)
 {
 	if(event == WebsocketsEvent::ConnectionClosed) {
 		wsDisableLog();
-		// g_ws_client = NULL;
+		g_ws_client = NULL;
 		// log_d("<close>");
 	}
 	// if(event == WebsocketsEvent::ConnectionOpened) {
@@ -114,7 +114,7 @@ void init_comms(bool createCommsTask, fs::FS &serveFs, const char* servePath, vo
 			sntp_setoperatingmode(SNTP_OPMODE_POLL);
 			sntp_setservername(0, (char *)"pool.ntp.org");
 			sntp_init();
-			delay(1000);
+			delay(2000);
 		}
 	} else {
 		WiFi.disconnect(true, true);
