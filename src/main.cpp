@@ -1,7 +1,7 @@
 // demonstrates the use of esp-comms
 #include <stdio.h>
 #include "Arduino.h"
-#include "ArduinoWebsockets.h"
+#include "WiFi.h"
 #include "SPIFFS.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -9,21 +9,33 @@
 #include "web_console.h"
 #include "json_settings.h"
 
-// Web socket RX callback
-static void onMsg(websockets::WebsocketsMessage msg)
-{
-	if (msg.length() <= 0)
-		return;
-
-	switch (msg.c_str()[0]) {
+// Web socket RX data received callback
+static void on_ws_data(
+	AsyncWebSocket * server,
+	AsyncWebSocketClient * client,
+	AwsEventType type,
+	void * arg,
+	uint8_t *data,
+	size_t len
+) {
+	switch (data[0]) {
 		case 'a':
-			wsDumpRtc();  // read rolling log buffer in RTC memory
+			wsDumpRtc(client);  // read rolling log buffer in RTC memory
 			break;
+
 		case 'b':
-			settings_ws_handler(msg);  // read / write settings.json
+			settings_ws_handler(client, data, len);  // read / write settings.json
 			break;
+
 		case 'r':
 			ESP.restart();
+			break;
+
+		case 'h':
+			client->printf(
+				"h{\"heap\": %d, \"min_heap\": %d}",
+				ESP.getFreeHeap(), ESP.getMinFreeHeap()
+			);
 			break;
 	}
 }
@@ -38,7 +50,7 @@ void setup()
 	// When settings.json cannot be opened, it will copy the default_settings over
 	set_settings_file("/spiffs/settings.json", "/spiffs/default_settings.json");
 
-	init_comms(false, SPIFFS, "/", onMsg);
+	init_comms(SPIFFS, "/", on_ws_data);
 
 	// This is how to access a string item from settings.json
 	log_d(
@@ -67,13 +79,14 @@ void loop() {
 
 	if (cycle % 100 == 0)
 		log_i(
-			"%.1f degC, stack loop(): %d,  comms(): %d",
+			"%.1f degC, stack loop(): %d, heap(): %d, %d",
 			temperatureRead() - 17,
 			uxTaskGetStackHighWaterMark(NULL),
-			uxTaskGetStackHighWaterMark(t_comms)
+			ESP.getFreeHeap(),
+			ESP.getMinFreeHeap()
 		);
 
-	refresh_comms();  // only needed with init_comms(false, ...)
+ 	g_ws.cleanupClients();
 
 	cycle++;
 	delay(100);

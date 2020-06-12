@@ -2,19 +2,17 @@
 #define JSON_SETTINGS_H
 
 #include "cJSON.h"
-#include <ArduinoWebsockets.h>
+#include "ESPAsyncWebServer.h"
 
-void settings_ws_handler(websockets::WebsocketsMessage msg);
+void settings_ws_handler(AsyncWebSocketClient *client, uint8_t *data, size_t len);
 
 // set the .json file with settings and a fall-back defaults_file
 // which will be copied over if not NULL
+// loads the settings file
 void set_settings_file(const char *f_settings, const char *f_defaults);
 
-// loads the SETTINGS_FILE (if not loaded yet) and returns the cJSON object
+// returns the cJSON object
 cJSON *getSettings();
-
-// Reloads the SETTINGS_FILE
-void reloadSettings();
 
 // Get item "string" from .json object. Returns NULL on error
 #define jGet cJSON_GetObjectItemCaseSensitive

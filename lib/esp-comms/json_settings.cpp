@@ -4,52 +4,41 @@
 #include <assert.h>
 #include <string.h>
 #include <Arduino.h>
-#include <ArduinoWebsockets.h>
 #include "cJSON.h"
 #include "json_settings.h"
 #include "esp_comms.h"
 
+static cJSON *g_settings = NULL;
 static const char *settings_file = NULL;
-static char *txtData = NULL;
 
-void settings_ws_handler(websockets::WebsocketsMessage msg)
-{
-	if (msg.length() > 1) {
-		FILE *dest = fopen(settings_file, "wb");
-		if (dest) {
-			fputs(&msg.c_str()[1], dest);
-			fclose(dest);
-			dest = NULL;
-			log_i("re-wrote %s", settings_file);
-			reloadSettings();
-		} else {
-			log_e("fopen(%s, wb) failed: %s", settings_file, strerror(errno));
-		}
+static AsyncWebSocketMessageBuffer *readFileDynWs(const char* file_name, char prefixChar) {
+	// opens the file file_name and reads it into a AsyncWebSocketMessageBuffer
+	if (file_name == NULL)
+		return NULL;
+
+	FILE *f = fopen(file_name, "rb");
+	if (!f) {
+		log_e("fopen(%s, rb) failed: %s", file_name, strerror(errno));
+		return NULL;
 	}
-	g_ws_client->send(String("b") + txtData);
-}
+	fseek(f, 0, SEEK_END);
+	int fsize = ftell(f);
+	fseek(f, 0, SEEK_SET);  // same as rewind(f);
+	log_d("loading %s, fsize: %d", file_name, fsize);
 
-void set_settings_file(const char *f_settings, const char *f_defaults)
-{
-	settings_file = f_settings;
-
-	if (f_defaults && getSettings() == NULL) {
-		char buf[32];
-		size_t size;
-		log_w("writing default-settings to %s", settings_file);
-		FILE* source = fopen(f_defaults, "rb");
-		FILE* dest = fopen(settings_file, "wb");
-		if (source && dest) {
-			while ((size = fread(buf, 1, sizeof(buf), source))) {
-				fwrite(buf, 1, size, dest);
-			}
-		} else {
-			log_e("could not copy %s to %s: %s", f_defaults, settings_file, strerror(errno));
-		}
-
-		if (source) fclose(source);
-		if (dest) fclose(dest);
+	AsyncWebSocketMessageBuffer *buffer = g_ws.makeBuffer(fsize + 1);
+	if (!buffer) {
+		log_e("No buffer :(");
+		return NULL;
 	}
+	uint8_t *buf = buffer->get();
+	if (prefixChar)
+		*buf++ = prefixChar;
+
+	fread(buf, fsize, 1, f);
+	fclose(f);
+
+	return buffer;
 }
 
 char *readFileDyn(const char* file_name, int *file_size) {
@@ -81,14 +70,13 @@ char *readFileDyn(const char* file_name, int *file_size) {
 	return string;
 }
 
-cJSON *readJsonDyn(const char* file_name) {
+static cJSON *readJsonDyn(const char* file_name) {
 	// opens the json file `file_name` and returns it as cJSON*
 	// don't forget to call cJSON_Delete() on it
 	cJSON *root;
+	char *txtData = NULL;
 
 	// try to read settings.json from SD card
-	// we keep txtData around for the web-interface
-	free(txtData);
 	txtData = readFileDyn(file_name, NULL);
 	if (txtData == NULL)
 		return NULL;
@@ -101,23 +89,62 @@ cJSON *readJsonDyn(const char* file_name) {
 			log_e("Error before: %s", error_ptr);
 		}
 	}
+
+	free(txtData);
 	return root;
 }
 
-static cJSON *g_settings = NULL;
-cJSON *getSettings() {
-	if (!g_settings) {
-		g_settings = readJsonDyn(settings_file);
+void settings_ws_handler(AsyncWebSocketClient *client, uint8_t *data, size_t len)
+{
+	if (!data || !client)
+		return;
+
+	if (len > 1) {
+		data[len] = 0;
+		FILE *dest = fopen(settings_file, "wb");
+		if (dest) {
+			fputs((const char *)&data[1], dest);
+			fclose(dest);
+			dest = NULL;
+			log_i("re-wrote %s", settings_file);
+		} else {
+			log_e("fopen(%s, wb) failed: %s", settings_file, strerror(errno));
+		}
 	}
-	return g_settings;
+
+	AsyncWebSocketMessageBuffer *buffer = readFileDynWs(settings_file, 'b');
+	if (buffer)
+		client->text(buffer);
 }
 
-void reloadSettings() {
-	cJSON_Delete(g_settings);
-	g_settings = NULL;
-	free(txtData);
-	txtData = NULL;
-	getSettings();
+void set_settings_file(const char *f_settings, const char *f_defaults)
+{
+	settings_file = f_settings;
+	g_settings = readJsonDyn(settings_file);
+
+	if (f_defaults && getSettings() == NULL) {
+		char buf[32];
+		size_t size;
+		log_w("writing default-settings to %s", settings_file);
+		FILE* source = fopen(f_defaults, "rb");
+		FILE* dest = fopen(settings_file, "wb");
+		if (source && dest) {
+			while ((size = fread(buf, 1, sizeof(buf), source))) {
+				fwrite(buf, 1, size, dest);
+			}
+		} else {
+			log_e("could not copy %s to %s: %s", f_defaults, settings_file, strerror(errno));
+		}
+
+		if (source) fclose(source);
+		if (dest) fclose(dest);
+
+		g_settings = readJsonDyn(settings_file);
+	}
+}
+
+cJSON *getSettings() {
+	return g_settings;
 }
 
 // return string from .json or default-value on error

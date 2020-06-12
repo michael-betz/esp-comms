@@ -1,6 +1,7 @@
 #ifndef WCONSOLE_H
 #define WCONSOLE_H
-#include <ArduinoWebsockets.h>
+
+#include "ESPAsyncWebServer.h"
 
 // Rolling buffer size in RTC mem for log entries in bytes
 #define LOG_FILE_SIZE 3576
@@ -13,7 +14,7 @@ void wsDebugPutc(char c);
 
 // dump the whole RTC buffer to the WS, oldest entries first.
 // call this once the WS connection is open.
-void wsDumpRtc(void);
+void wsDumpRtc(AsyncWebSocketClient *client);
 
 void wsDisableLog();
 

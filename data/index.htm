@@ -9,19 +9,25 @@
 </head>
 
 <body>
-<h2><b><span id=connected_status>❌</span></b> console</h1>
-<p style='text-align: center;'><a href='settings.htm'>settings</a></p>
+<h2>
+  <span id=host_name></span> log
+  <span id=connected_status>❌</span>
+</h2>
+<p style='text-align: center;'>
+  <a href='settings.htm'>settings</a>
+</p>
 <div class="shell-wrap">
   <ul class="shell-body", id="output"></ul>
 </div>
 </body>
 
 <script language="javascript" type="text/javascript">
-  var wsUri = "ws://" + window.location.host + ":8080";
-  // var wsUri = "ws://192.168.42.224:8080";
+  var wsUri = "ws://" + window.location.host + "/ws";
+  // var wsUri = "ws://192.168.43.102/ws";
   var websocket;
   var ansi_up = new AnsiUp;
-  var isScroll=true;
+  var isScroll = true;
+  var reader = new FileReader();
 
   function writeToScreen(message) {
     if (message.length <= 0)
@@ -37,11 +43,16 @@
     }
   }
 
+var dat = "";
+
   function init() {
     websocket = new WebSocket(wsUri);
+    websocket.binaryType = 'arraybuffer';
+
     websocket.onopen = function(evt) {
       writeToScreen("WS CONNECTED");
       websocket.send('a');  // dump RTC buffer command
+      websocket.send('h');  // get heap command
     };
 
     websocket.onclose = function(evt) {
@@ -51,12 +62,23 @@
 
     websocket.onmessage = function(evt) {
       console.log("dat: " + evt.data);
-      if (evt.data.startsWith('{"hello": ')) {
-        temp = JSON.parse(evt.data);
-        connected_status.innerHTML = "✅ " + temp["hello"];
-      } else if (evt.data[0] == 'a') {
-        temp_str = evt.data.substr(1).replace(/\0/g, '').replace("\r","");
+
+      dat = evt.data;
+      if(typeof(dat) != "string") {
+        dec = new TextDecoder("utf-8");
+        dat = dec.decode(dat);
+      }
+
+      if (dat.startsWith('{"hello": ')) {
+        temp = JSON.parse(dat);
+        connected_status.innerHTML = "✅"
+        host_name.innerHTML = temp["hello"];
+      } else if (dat[0] == 'a') {
+        temp_str = dat.substr(1).replace(/\0/g, '').replace("\r","");
         temp_str.split("\n").forEach(writeToScreen);
+      } else if (dat[0] == 'h') {
+        temp = JSON.parse(dat.substr(1));
+        writeToScreen(dat.substr(1));
       }
     };
 
@@ -71,8 +93,6 @@
     };
   }
 
-  window.onload = function() {
-    window.setTimeout(init, 500);
-  }
+  window.onload = init();
 </script>
 </html>

@@ -10,7 +10,10 @@
 RTC_NOINIT_ATTR static char rtcLogBuffer[LOG_FILE_SIZE];
 RTC_NOINIT_ATTR static char *rtcLogWritePtr = rtcLogBuffer;
 
+static const char *logBuffEnd = rtcLogBuffer + LOG_FILE_SIZE - 1;
+
 static bool isLog = false;
+AsyncWebSocketClient *wsc = NULL;
 
 void wsDisableLog()
 {
@@ -20,7 +23,6 @@ void wsDisableLog()
 void wsDebugPutc(char c)
 {
 	// ring-buffer in RTC memory for persistence in sleep mode
-	static const char *logBuffEnd = rtcLogBuffer + LOG_FILE_SIZE - 1;
 	*rtcLogWritePtr = c;
 	if (rtcLogWritePtr >= logBuffEnd) {
 		rtcLogWritePtr = rtcLogBuffer;
@@ -38,30 +40,44 @@ void wsDebugPutc(char c)
 
 	if (c == '\n' || line_len >= sizeof(line_buff) - 1) {
 		line_buff[sizeof(line_buff) - 1] = '\0';
-		if (isLog) {
-			if (g_ws_client && g_ws_client->available())
-				g_ws_client->send(line_buff, line_len);
-			else
-				wsDisableLog();
-		}
+		if (isLog && wsc && wsc->status() == WS_CONNECTED)
+			wsc->binary(line_buff, line_len);
+		else
+			isLog = false;
 		cur_char = &line_buff[1];
 		line_len = 1;
 	}
 }
 
-void wsDumpRtc(void)
+void wsDumpRtc(AsyncWebSocketClient *ws_client)
 {
-	const char *logBuffEnd = rtcLogBuffer + LOG_FILE_SIZE - 1;
-	if (g_ws_client == NULL)
+	if (!ws_client)
 		return;
-	// put ws command on oldest character
-	*rtcLogWritePtr = 'a';
-	g_ws_client->stream();
+
+	AsyncWebSocketMessageBuffer *buffer = g_ws.makeBuffer(LOG_FILE_SIZE + 1);
+	if (!buffer) {
+		log_e("No buffer :(");
+		return;
+	}
+	uint8_t *buf = buffer->get();
+	*buf++ = 'a';
+
+	const char *w_ptr = rtcLogWritePtr;
+
 	// dump rtc_buffer[w_ptr:] (oldest part)
-	g_ws_client->send(rtcLogWritePtr, logBuffEnd - rtcLogWritePtr + 1);
+	unsigned l0 = logBuffEnd - w_ptr + 1;
+	memcpy(buf, w_ptr, l0);
+	buf += l0;
+
 	// dump rtc_buffer[:w_ptr] (newest part)
-	g_ws_client->send(rtcLogBuffer, rtcLogWritePtr - rtcLogBuffer);
-	g_ws_client->end();
+	unsigned l1 = w_ptr - rtcLogBuffer;
+	memcpy(buf, rtcLogBuffer, l1);
+
+	log_d("l0 + l1 = %d", l0 + l1);
+
+	ws_client->binary(buffer);
+
+	wsc = ws_client;
 	isLog = true;
 }
 
@@ -71,7 +87,7 @@ void web_console_init()
 		memset(rtcLogBuffer, 0, LOG_FILE_SIZE - 1);
 		rtcLogWritePtr = rtcLogBuffer;
 	} else {
-		if (rtcLogWritePtr < rtcLogBuffer || rtcLogWritePtr > &rtcLogBuffer[LOG_FILE_SIZE - 1])
+		if (rtcLogWritePtr < rtcLogBuffer || rtcLogWritePtr > logBuffEnd)
 			rtcLogWritePtr = rtcLogBuffer;
 	}
 	ets_install_putc2(wsDebugPutc);
