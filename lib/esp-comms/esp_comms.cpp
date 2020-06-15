@@ -118,7 +118,7 @@ void init_comms(fs::FS &serveFs, const char* servePath, AwsEventHandler on_ws_da
 			sntp_setoperatingmode(SNTP_OPMODE_POLL);
 			sntp_setservername(0, (char *)"pool.ntp.org");
 			sntp_init();
-			delay(000);
+			delay(1000);
 		}
 	} else {
 		WiFi.disconnect(true, true);
