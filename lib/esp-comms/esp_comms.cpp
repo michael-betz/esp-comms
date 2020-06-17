@@ -1,10 +1,10 @@
-#include <WiFi.h>
-#include <ArduinoOTA.h>
-#include <ESPmDNS.h>
+#include "WiFi.h"
+#include "ArduinoOTA.h"
+#include "ESPmDNS.h"
 #include "lwip/apps/sntp.h"
 #include "ESPAsyncWebServer.h"
-#include <SPIFFS.h>
-#include <FS.h>
+#include "SPIFFS.h"
+#include "FS.h"
 #include "json_settings.h"
 #include "web_console.h"
 #include "esp_comms.h"
@@ -168,3 +168,10 @@ void init_comms(fs::FS &serveFs, const char* servePath, AwsEventHandler on_ws_da
 	strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
 	log_i("Local Time: %s (%ld)", strftime_buf, now);
 }
+
+// void refresh_comms(void)
+// {
+// 	ArduinoOTA.handle();
+// 	if (WiFi.status() != WL_CONNECTED)
+// 		WiFi.begin();
+// }

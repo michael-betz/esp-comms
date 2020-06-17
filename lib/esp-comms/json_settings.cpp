@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <string.h>
-#include <Arduino.h>
+#include "Arduino.h"
 #include "cJSON.h"
 #include "json_settings.h"
 #include "esp_comms.h"
