@@ -6,8 +6,6 @@
 
 extern AsyncWebSocket g_ws;
 
-extern TaskHandle_t t_comms;
-
 // needs to be called once
 // with init_comms(false) you'll need to call refresh_comms() regularly
 // init_comms(true) is buggy

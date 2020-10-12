@@ -73,7 +73,7 @@ void wsDumpRtc(AsyncWebSocketClient *ws_client)
 	unsigned l1 = w_ptr - rtcLogBuffer;
 	memcpy(buf, rtcLogBuffer, l1);
 
-	log_v("l0 + l1 = %d", l0 + l1);
+	// log_v("l0 + l1 = %d", l0 + l1);
 
 	ws_client->binary(buffer);
 

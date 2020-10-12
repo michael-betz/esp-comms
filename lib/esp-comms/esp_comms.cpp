@@ -1,6 +1,6 @@
 #include "WiFi.h"
 #include "ArduinoOTA.h"
-#include "ESPmDNS.h"
+// #include "ESPmDNS.h"
 #include "lwip/apps/sntp.h"
 #include "ESPAsyncWebServer.h"
 #include "SPIFFS.h"
