@@ -10,5 +10,8 @@
   "examples": ["src/main.cpp"],
   "build": {
     "srcDir": "lib/esp-comms"
+  },
+  "dependencies": {
+    "ESP Async WebServer": "*"
   }
 }
