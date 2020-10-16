@@ -86,11 +86,11 @@ static bool isOta = false;
 
 void init_comms(fs::FS &serveFs, const char* servePath, AwsEventHandler on_ws_data)
 {
-	// register ws data RX handler
-	ws_data_cb = on_ws_data;
-
 	cJSON *s = getSettings();
 
+	// ------------------------------
+	//  connect to WIFI
+	// ------------------------------
 	// Where do the connection settings come from?
 	//   * take `wifi_ssid` and `wifi_pw` keys in the .json config
 	//   * if that fails, if falls back to the build flags in platformio.ini
@@ -98,14 +98,12 @@ void init_comms(fs::FS &serveFs, const char* servePath, AwsEventHandler on_ws_da
 	//   * AP mode can be enforced by pushing the `FLASH` button while booting
 	const char *ssid = jGetS(s, "wifi_ssid", WIFI_NAME);
 	const char *host = jGetS(s, "hostname", WIFI_HOST_NAME);
-
-	// ------------------------------
-	//  connect to WIFI
-	// ------------------------------
+	WiFi.disconnect(true, true);
 	WiFi.setHostname(host);
 	WiFi.begin(ssid, jGetS(s, "wifi_pw", WIFI_PW));
 	log_i("This is %s, connecting to %s", host, ssid);
 
+	pinMode(0, INPUT_PULLUP);
 	for (int i=0; i<=100; i++) {
 		if (WiFi.status() == WL_CONNECTED || !digitalRead(0)) {
 			break;
@@ -122,13 +120,50 @@ void init_comms(fs::FS &serveFs, const char* servePath, AwsEventHandler on_ws_da
 		}
 	} else {
 		WiFi.disconnect(true, true);
-		WiFi.softAPsetHostname(host);
-		WiFi.softAP(host);
-		log_e(
-			"No STA connection, switching to AP mode (%s)",
-			WiFi.softAPIP().toString().c_str()
-		);
+		log_e("No STA connection :(");
+		if (jGetB(s, "wifi_ap", true)) {
+			WiFi.softAPsetHostname(host);
+			WiFi.softAP(host);
+			log_i(
+				"switching to AP mode (%s)",
+				WiFi.softAPIP().toString().c_str()
+			);
+		} else {
+			// no network, no point of initializing anything more
+			return;
+		}
 	}
+
+	startServices(serveFs, servePath, on_ws_data);
+
+	// ------------------------------
+	//  Set the clock / print time
+	// ------------------------------
+	// Set timezone to Eastern Standard Time and print local time
+	const char *tz_str = jGetS(getSettings(), "timezone", "PST8PDT");
+	log_i("Setting timezone to TZ = %s", tz_str);
+	setenv("TZ", tz_str, 1);
+	tzset();
+	time_t now = time(NULL);
+	struct tm timeinfo = {0};
+	char strftime_buf[64];
+	localtime_r(&now, &timeinfo);
+	strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+	log_i("Local Time: %s (%ld)", strftime_buf, now);
+}
+
+void startServices(fs::FS &serveFs, const char* servePath, AwsEventHandler on_ws_data)
+{
+	cJSON *s = getSettings();
+	const char *host = jGetS(s, "hostname", WIFI_HOST_NAME);
+
+	// register ws data RX handler
+	ws_data_cb = on_ws_data;
+
+	// SNTP
+	sntp_setoperatingmode(SNTP_OPMODE_POLL);
+	sntp_setservername(0, (char *)"pool.ntp.org");
+	sntp_init();
 
 	// -------------------------------
 	//  Over The Air firmware updates
@@ -152,21 +187,14 @@ void init_comms(fs::FS &serveFs, const char* servePath, AwsEventHandler on_ws_da
 	// attach filesystem root at URL /fs
 	server.serveStatic("/", serveFs, servePath);
 	server.begin();
+}
 
-	// ------------------------------
-	//  Set the clock / print time
-	// ------------------------------
-	// Set timezone to Eastern Standard Time and print local time
-	const char *tz_str = jGetS(getSettings(), "timezone", "PST8PDT");
-	log_i("Setting timezone to TZ = %s", tz_str);
-	setenv("TZ", tz_str, 1);
-	tzset();
-	time_t now = time(NULL);
-	struct tm timeinfo = {0};
-	char strftime_buf[64];
-	localtime_r(&now, &timeinfo);
-	strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-	log_i("Local Time: %s (%ld)", strftime_buf, now);
+
+void stopServices()
+{
+	server.end();
+	ArduinoOTA.end();
+	sntp_stop();
 }
 
 // void refresh_comms(void)

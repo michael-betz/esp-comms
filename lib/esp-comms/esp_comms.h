@@ -7,14 +7,10 @@
 extern AsyncWebSocket g_ws;
 
 // needs to be called once
-// with init_comms(false) you'll need to call refresh_comms() regularly
-// init_comms(true) is buggy
 void init_comms(fs::FS &serveFs, const char* servePath, AwsEventHandler on_ws_data);
 
-// needs to be called regularly now and then to handle wifi reconnect
-// void refresh_comms(void);
+void startServices(fs::FS &serveFs, const char* servePath, AwsEventHandler on_ws_data);
 
-// write data to open websocket. Thread-safe. Returns true on success.
-// bool write_ws(const char *data, unsigned len);
+void stopServices();
 
 #endif
