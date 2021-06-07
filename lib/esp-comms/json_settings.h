@@ -24,9 +24,9 @@ const char *jGetS(const cJSON *json, const char *name, const char *default_val);
 int jGetI(cJSON *json, const char *name, int default_val);
 
 // return double from .json or default-value on error
-int jGetD(cJSON *json, const char *name, double default_val);
+double jGetD(cJSON *json, const char *name, double default_val);
 
 // return bool from .json or default-value on error
-int jGetB(cJSON *json, const char *name, bool default_val);
+bool jGetB(cJSON *json, const char *name, bool default_val);
 
 #endif

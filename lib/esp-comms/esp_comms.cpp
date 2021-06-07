@@ -161,6 +161,8 @@ void startServices(fs::FS &serveFs, const char* servePath, AwsEventHandler on_ws
 	ws_data_cb = on_ws_data;
 
 	// SNTP
+	if (sntp_enabled())
+		sntp_stop();
 	sntp_setoperatingmode(SNTP_OPMODE_POLL);
 	sntp_setservername(0, (char *)"pool.ntp.org");
 	sntp_init();

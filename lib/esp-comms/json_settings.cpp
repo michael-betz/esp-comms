@@ -168,7 +168,7 @@ int jGetI(cJSON *json, const char *name, int default_val) {
 }
 
 // return double from .json or default-value on error
-int jGetD(cJSON *json, const char *name, double default_val) {
+double jGetD(cJSON *json, const char *name, double default_val) {
 	const cJSON *j = cJSON_GetObjectItemCaseSensitive(json, name);
 	if (!cJSON_IsNumber(j)) {
 		log_e("%s is not a number, falling back to %f", name, default_val);
@@ -178,7 +178,7 @@ int jGetD(cJSON *json, const char *name, double default_val) {
 }
 
 // return bool from .json or default-value on error
-int jGetB(cJSON *json, const char *name, bool default_val) {
+bool jGetB(cJSON *json, const char *name, bool default_val) {
 	const cJSON *j = cJSON_GetObjectItemCaseSensitive(json, name);
 	if (!cJSON_IsBool(j)) {
 		log_e("%s is not a bool, falling back to %s", name, default_val ? "true" : "false");
